@@ -108,7 +108,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -116,10 +116,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await params;
     const { db } = await connectToDatabase();
 
     const result = await db.collection('tasks').deleteOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
       userId: session.user.id as string,
     });
 

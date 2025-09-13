@@ -86,8 +86,9 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
       const response = await fetch('/api/tasks');
       if (response.ok) {
         const data = await response.json();
-        setTasks(data.map((task: any) => ({
+        setTasks(data.map((task: RawTask) => ({
           ...task,
+          _id: task.id, // Map id to _id for consistency
           createdAt: new Date(task.createdAt),
           updatedAt: new Date(task.updatedAt),
           startTime: task.startTime ? new Date(task.startTime) : undefined,
