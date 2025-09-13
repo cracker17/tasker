@@ -43,8 +43,8 @@ export default function SetupPage() {
     <div className="min-h-screen">
       <Navigation />
 
-      {/* Hero Section with Animated Gradient */}
-      <section className="relative min-h-screen flex items-center overflow-hidden animate-gradient-shift">
+      {/* Hero Section with Dark Background */}
+      <section className="relative min-h-screen flex items-center overflow-hidden bg-gray-900">
         {/* Animated Silhouette Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Floating geometric shapes */}
@@ -69,14 +69,14 @@ export default function SetupPage() {
               Setup Your Tasker Environment
             </div>
 
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-6 animate-fade-in">
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 animate-fade-in">
               Get Started with
               <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Tasker Setup
               </span>
             </h1>
 
-            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed animate-fade-in animation-delay-500">
+            <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto leading-relaxed animate-fade-in animation-delay-500">
               Configure your MongoDB database and create a test user to start managing tasks with Tasker.
               Follow the steps below to get everything running smoothly.
             </p>
