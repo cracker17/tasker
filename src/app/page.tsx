@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { useTasks } from '@/lib/TaskContext';
-import { Plus, History, CheckSquare, Undo2, FileText, Loader2, Clock } from 'lucide-react';
+import { Plus, History, CheckSquare, Undo2, FileText, Loader2, Clock, LogOut, User } from 'lucide-react';
 import { KanbanBoard } from '@/components/KanbanBoard';
 import { TaskHistory } from '@/components/TaskHistory';
 import { AddTaskModal } from '@/components/AddTaskModal';
@@ -11,15 +13,36 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Footer } from '@/components/Footer';
 
 export default function Home() {
+  const { data: session, status } = useSession();
   const { canUndo, undo, logs, isHydrated } = useTasks();
   const [showAddTask, setShowAddTask] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showReportGenerator, setShowReportGenerator] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin');
+    }
+  }, [status, router]);
+
+  // Show loading state until authentication is determined
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <Clock className="w-16 h-16 text-blue-500 animate-clock-spin mx-auto mb-4" />
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">Tasker</h1>
+          <p className="text-gray-600">Authenticating...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Show loading state until hydration is complete
   if (!mounted || !isHydrated) {
@@ -33,6 +56,15 @@ export default function Home() {
       </div>
     );
   }
+
+  // Redirect if not authenticated
+  if (!session) {
+    return null;
+  }
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/auth/signin' });
+  };
 
 
   return (
@@ -56,6 +88,12 @@ export default function Home() {
 
             {/* Navigation & Actions */}
             <nav className="flex items-center gap-1">
+              {/* User Info */}
+              <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 border-r border-gray-200 mr-2">
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">{session.user?.name || session.user?.email}</span>
+              </div>
+
               {/* History Toggle */}
               <button
                 onClick={() => setShowHistory(!showHistory)}
@@ -97,6 +135,16 @@ export default function Home() {
                 <Undo2 className="w-5 h-5" />
               </button>
 
+              {/* Sign Out Button */}
+              <button
+                onClick={handleSignOut}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent transition-all duration-200"
+                aria-label="Sign out"
+                title="Sign Out"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </button>
 
               {/* Add Task Button */}
               <button

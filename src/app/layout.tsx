@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import { TaskProvider } from "@/lib/TaskContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { SessionProvider } from "@/components/SessionProvider";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -25,16 +26,18 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} font-sans antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <TaskProvider>
-            {children}
-          </TaskProvider>
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <TaskProvider>
+              {children}
+            </TaskProvider>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );

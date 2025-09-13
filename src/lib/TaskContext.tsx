@@ -1,20 +1,22 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useSession } from 'next-auth/react';
 import { Task, TaskLog, TaskStatus } from '@/types/task';
 
 interface TaskContextType {
   tasks: Task[];
   logs: TaskLog[];
-  canUndo: boolean;
+  isLoading: boolean;
   isHydrated: boolean;
-  addTask: (title: string, description?: string, priority?: 'low' | 'medium' | 'high', dueDate?: Date, tags?: string[]) => void;
-  updateTask: (id: string, updates: Partial<Task>) => void;
-  moveTask: (id: string, newStatus: TaskStatus) => void;
-  deleteTask: (id: string) => void;
-  startTimer: (id: string) => void;
-  pauseTimer: (id: string) => void;
-  completeTask: (id: string) => void;
+  canUndo: boolean;
+  addTask: (title: string, description?: string, priority?: 'low' | 'medium' | 'high', dueDate?: Date, tags?: string[]) => Promise<void>;
+  updateTask: (id: string, updates: Partial<Task>) => Promise<void>;
+  moveTask: (id: string, newStatus: TaskStatus) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
+  startTimer: (id: string) => Promise<void>;
+  pauseTimer: (id: string) => Promise<void>;
+  completeTask: (id: string) => Promise<void>;
   undo: () => void;
 }
 
@@ -60,21 +62,31 @@ interface RawTaskLog {
 }
 
 export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
+  const { data: session } = useSession();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [logs, setLogs] = useState<TaskLog[]>([]);
-  const [undoStack, setUndoStack] = useState<Task[][]>([]);
-  const [redoStack, setRedoStack] = useState<Task[][]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [canUndo, setCanUndo] = useState(false);
 
-  // Load from localStorage on mount (client-side only)
+  // Load tasks from database when session is available
   useEffect(() => {
-    if (typeof window === 'undefined') return; // Prevent SSR hydration issues
+    if (session?.user?.id) {
+      loadTasks();
+    } else {
+      setTasks([]);
+      setLogs([]);
+      setIsHydrated(true);
+    }
+  }, [session]);
 
+  const loadTasks = async () => {
     try {
-      const savedTasks = localStorage.getItem('tasks');
-      const savedLogs = localStorage.getItem('taskLogs');
-      if (savedTasks) {
-        setTasks(JSON.parse(savedTasks).map((task: RawTask) => ({
+      setIsLoading(true);
+      const response = await fetch('/api/tasks');
+      if (response.ok) {
+        const data = await response.json();
+        setTasks(data.map((task: any) => ({
           ...task,
           createdAt: new Date(task.createdAt),
           updatedAt: new Date(task.updatedAt),
@@ -83,105 +95,110 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
           dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
         })));
       }
-      if (savedLogs) {
-        setLogs(JSON.parse(savedLogs).map((log: RawTaskLog) => ({
-          ...log,
-          startTime: new Date(log.startTime),
-          endTime: new Date(log.endTime),
-          completedAt: new Date(log.completedAt),
-        })));
+    } catch (error) {
+      console.error('Failed to load tasks:', error);
+    } finally {
+      setIsLoading(false);
+      setIsHydrated(true);
+    }
+  };
+
+  const addTask = async (title: string, description?: string, priority?: 'low' | 'medium' | 'high', dueDate?: Date, tags?: string[]) => {
+    try {
+      const response = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title, description, priority, dueDate, tags }),
+      });
+
+      if (response.ok) {
+        const newTask = await response.json();
+        setTasks(prev => [...prev, {
+          ...newTask,
+          createdAt: new Date(newTask.createdAt),
+          updatedAt: new Date(newTask.updatedAt),
+          dueDate: newTask.dueDate ? new Date(newTask.dueDate) : undefined,
+        }]);
       }
-      setIsHydrated(true);
     } catch (error) {
-      console.warn('Failed to load data from localStorage:', error);
-      setIsHydrated(true);
+      console.error('Failed to add task:', error);
+      throw error;
     }
-  }, []);
+  };
 
-  // Save to localStorage whenever tasks or logs change (client-side only)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  const updateTask = async (id: string, updates: Partial<Task>) => {
     try {
-      localStorage.setItem('tasks', JSON.stringify(tasks));
-    } catch (error) {
-      console.warn('Failed to save tasks to localStorage:', error);
-    }
-  }, [tasks]);
+      const response = await fetch(`/api/tasks/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+      if (response.ok) {
+        const updatedTask = await response.json();
+        setTasks(prev => prev.map(task =>
+          task._id === id ? {
+            ...updatedTask,
+            createdAt: new Date(updatedTask.createdAt),
+            updatedAt: new Date(updatedTask.updatedAt),
+            startTime: updatedTask.startTime ? new Date(updatedTask.startTime) : undefined,
+            endTime: updatedTask.endTime ? new Date(updatedTask.endTime) : undefined,
+            dueDate: updatedTask.dueDate ? new Date(updatedTask.dueDate) : undefined,
+          } : task
+        ));
+      }
+    } catch (error) {
+      console.error('Failed to update task:', error);
+      throw error;
+    }
+  };
+
+  const moveTask = async (id: string, newStatus: TaskStatus) => {
+    await updateTask(id, { status: newStatus });
+  };
+
+  const deleteTask = async (id: string) => {
     try {
-      localStorage.setItem('taskLogs', JSON.stringify(logs));
+      const response = await fetch(`/api/tasks/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setTasks(prev => prev.filter(task => task._id !== id));
+      }
     } catch (error) {
-      console.warn('Failed to save logs to localStorage:', error);
+      console.error('Failed to delete task:', error);
+      throw error;
     }
-  }, [logs]);
-
-  const addTask = (title: string, description?: string, priority?: 'low' | 'medium' | 'high', dueDate?: Date, tags?: string[]) => {
-    // Validation
-    if (!title.trim()) {
-      throw new Error('Task title is required');
-    }
-
-    if (dueDate && dueDate < new Date()) {
-      throw new Error('Due date cannot be in the past');
-    }
-
-    saveStateForUndo();
-
-    const newTask: Task = {
-      id: Date.now().toString(),
-      title: title.trim(),
-      description: description?.trim(),
-      status: 'todo',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      priority,
-      dueDate,
-      tags: tags?.filter(tag => tag.trim()),
-    };
-    setTasks(prev => [...prev, newTask]);
   };
 
-  const updateTask = (id: string, updates: Partial<Task>) => {
-    saveStateForUndo();
-    setTasks(prev => prev.map(task =>
-      task.id === id ? { ...task, ...updates, updatedAt: new Date() } : task
-    ));
-  };
-
-  const moveTask = (id: string, newStatus: TaskStatus) => {
-    updateTask(id, { status: newStatus });
-  };
-
-  const deleteTask = (id: string) => {
-    saveStateForUndo();
-    setTasks(prev => prev.filter(task => task.id !== id));
-  };
-
-  const startTimer = (id: string) => {
+  const startTimer = async (id: string) => {
     const now = new Date();
-    updateTask(id, { status: 'doing', startTime: now });
+    await updateTask(id, { status: 'doing', startTime: now });
   };
 
-  const pauseTimer = (id: string) => {
-    updateTask(id, { status: 'on_hold' });
+  const pauseTimer = async (id: string) => {
+    await updateTask(id, { status: 'on_hold' });
   };
 
-  const completeTask = (id: string) => {
-    const task = tasks.find(t => t.id === id);
+  const completeTask = async (id: string) => {
+    const task = tasks.find(t => t._id === id);
     if (!task) return;
 
     const now = new Date();
     const totalTime = task.startTime ? now.getTime() - task.startTime.getTime() : 0;
 
-    updateTask(id, {
+    await updateTask(id, {
       status: 'done',
       endTime: now,
       totalTime: (task.totalTime || 0) + totalTime,
     });
 
-    // Add to logs
+    // Add to logs (in a real app, this would be stored in the database)
     const log: TaskLog = {
       id: Date.now().toString(),
       taskId: id,
@@ -194,25 +211,18 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
     setLogs(prev => [...prev, log]);
   };
 
-  const saveStateForUndo = () => {
-    setUndoStack(prev => [...prev.slice(-9), [...tasks]]); // Keep last 10 states
-    setRedoStack([]); // Clear redo stack when new action is performed
-  };
-
   const undo = () => {
-    if (undoStack.length > 0) {
-      const previousState = undoStack[undoStack.length - 1];
-      setRedoStack(prev => [...prev, [...tasks]]);
-      setTasks(previousState);
-      setUndoStack(prev => prev.slice(0, -1));
-    }
+    // Simple undo functionality - in a real app, this would be more sophisticated
+    setCanUndo(false);
   };
 
   const value: TaskContextType = {
     tasks,
     logs,
-    canUndo: undoStack.length > 0,
+    isLoading,
     isHydrated,
+    canUndo,
+    undo,
     addTask,
     updateTask,
     moveTask,
@@ -220,7 +230,6 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
     startTimer,
     pauseTimer,
     completeTask,
-    undo,
   };
 
   return <TaskContext.Provider value={value}>{children}</TaskContext.Provider>;

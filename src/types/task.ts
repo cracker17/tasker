@@ -1,7 +1,8 @@
 export type TaskStatus = 'todo' | 'doing' | 'on_hold' | 'done';
 
 export interface Task {
-  id: string;
+  _id?: string; // MongoDB ObjectId
+  id: string; // Client-side ID for backward compatibility
   title: string;
   description?: string;
   status: TaskStatus;
