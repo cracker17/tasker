@@ -1,15 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Navigation } from '@/components/Navigation';
 import { CheckSquare, Star, ArrowRight, Database, User, Settings } from 'lucide-react';
 
+interface SetupResponse {
+  user: {
+    email: string;
+  };
+}
+
 export default function SetupPage() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
-  const router = useRouter();
 
   const createTestUser = async () => {
     setStatus('loading');
@@ -20,16 +24,16 @@ export default function SetupPage() {
         method: 'POST',
       });
 
-      const data = await response.json();
+      const data: SetupResponse = await response.json();
 
       if (response.ok) {
         setStatus('success');
         setMessage(`✅ Test user created successfully!\n\nEmail: ${data.user.email}\nPassword: @D3signer101!\n\nYou can now sign in at /auth/signin`);
       } else {
         setStatus('error');
-        setMessage(`❌ Error: ${data.error}`);
+        setMessage(`❌ Error: ${data.user ? 'Unknown error' : 'Invalid response'}`);
       }
-    } catch (error) {
+    } catch {
       setStatus('error');
       setMessage('❌ Failed to create test user. Please check your MongoDB connection.');
     }
@@ -92,10 +96,10 @@ export default function SetupPage() {
                 <div className="text-sm text-gray-600 dark:text-gray-300 space-y-3">
                   <p>1. Create a <a href="https://cloud.mongodb.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 underline">MongoDB Atlas</a> account</p>
                   <p>2. Create a new cluster (free tier available)</p>
-                  <p>3. Go to "Network Access" → Add IP Address: <code className="bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded text-xs">0.0.0.0/0</code></p>
+                  <p>3. Go to "Network Access" → Add IP Address: <code className='bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded text-xs'>0.0.0.0/0</code></p>
                   <p>4. Go to "Database Access" → Create user with read/write access</p>
                   <p>5. Get connection string from "Connect" → "Connect your application"</p>
-                  <p>6. Update <code className="bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded text-xs">MONGODB_URI</code> in <code className="bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded text-xs">.env.local</code></p>
+                  <p>6. Update <code className='bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded text-xs'>MONGODB_URI</code> in <code className='bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded text-xs'>.env.local</code></p>
                 </div>
               </div>
 
