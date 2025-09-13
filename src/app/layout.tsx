@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { NotificationProvider } from "@/lib/NotificationContext";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -31,7 +32,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <NotificationProvider>
+            {children}
+          </NotificationProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -418,9 +418,5 @@ function HomeContent() {
 }
 
 export default function Home() {
-  return (
-    <NotificationProvider>
-      <HomeContent />
-    </NotificationProvider>
-  );
+  return <HomeContent />;
 }
