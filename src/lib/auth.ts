@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 import connectToDatabase from './mongodb';
 
 export const authOptions: NextAuthOptions = {
-  adapter: MongoDBAdapter(MongoClient.connect(process.env.MONGODB_URI!)),
+  // adapter: MongoDBAdapter(MongoClient.connect(process.env.MONGODB_URI!)),
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -50,7 +50,6 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/auth/signin',
-    signUp: '/auth/signup',
   },
   callbacks: {
     async jwt({ token, user }) {

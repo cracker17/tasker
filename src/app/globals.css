@@ -269,3 +269,115 @@
 .animate-clock-spin {
   animation: clock-spin 1s linear infinite;
 }
+
+/* Animated gradient backgrounds */
+@keyframes gradient-x {
+  0%, 100% {
+    transform: translateX(0%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes gradient-y {
+  0%, 100% {
+    transform: translateY(0%);
+  }
+  50% {
+    transform: translateY(100%);
+  }
+}
+
+.animate-gradient-x {
+  animation: gradient-x 15s ease infinite;
+}
+
+.animate-gradient-y {
+  animation: gradient-y 15s ease infinite;
+  animation-delay: -7.5s;
+}
+
+/* Counter animation */
+@keyframes counter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-counter {
+  animation: counter 2s ease-out forwards;
+  opacity: 0;
+}
+
+/* Slide up animation for text cycling */
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-40px) scale(0.95);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 3s ease-in-out infinite;
+}
+
+/* Randomized color highlights for sliding text */
+@keyframes color-cycle {
+  0% {
+    color: #fbbf24;    /* amber-400 */
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+  }
+  14% {
+    color: #34d399;   /* emerald-400 */
+    text-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+  }
+  28% {
+    color: #06b6d4;   /* cyan-500 */
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+  }
+  42% {
+    color: #f59e0b;   /* amber-500 */
+    text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+  }
+  57% {
+    color: #10b981;   /* emerald-500 */
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  }
+  71% {
+    color: #0891b2;   /* cyan-600 */
+    text-shadow: 0 0 10px rgba(8, 145, 178, 0.5);
+  }
+  85% {
+    color: #f97316;   /* orange-500 */
+    text-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
+  }
+  100% {
+    color: #fbbf24;   /* amber-400 */
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+  }
+}
+
+.animate-color-highlight {
+  animation: color-cycle 3s ease-in-out infinite;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
