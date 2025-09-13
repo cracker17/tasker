@@ -1,9 +1,10 @@
 # Tasker - Task Management Application
 
-A comprehensive task management application built with Next.js, featuring integrated timers, drag-and-drop Kanban board, AI-powered enhancements, and persistent storage.
+A comprehensive task management application built with Next.js, featuring integrated timers, drag-and-drop Kanban board, AI-powered enhancements, user authentication, and persistent storage with MongoDB.
 
 ## Features
 
+- **User Authentication**: Secure login/signup with NextAuth.js and JWT sessions
 - **Task Creation and Timers**: Add tasks with integrated timers that track elapsed time in real-time
 - **Completion Animation**: Celebratory confetti animation upon task completion
 - **Task Logging**: Automatic logging of completed tasks with start/end times and total duration
@@ -11,12 +12,14 @@ A comprehensive task management application built with Next.js, featuring integr
 - **AI Enhancement**: OpenAI-powered suggestions for task improvements, subtasks, priorities, and time estimates
 - **Dark/Light Mode**: Theme toggle with system preference detection
 - **Responsive Design**: Mobile-friendly layout with Tailwind CSS
-- **Local Storage**: Persistent data storage with option for cloud sync
+- **MongoDB Storage**: Persistent data storage with user-specific task management
 - **Accessibility**: WCAG compliant with keyboard navigation and screen reader support
 
 ## Tech Stack
 
 - **Frontend**: Next.js 15, React, TypeScript
+- **Authentication**: NextAuth.js with JWT
+- **Database**: MongoDB with MongoDB Adapter
 - **Styling**: Tailwind CSS
 - **Drag & Drop**: @dnd-kit
 - **Animations**: react-confetti
@@ -42,11 +45,28 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Environment Variables
 
-For AI features, add your OpenAI API key to `.env.local`:
+Create a `.env.local` file in the root directory and add the following variables:
 
 ```bash
+# NextAuth Configuration
+NEXTAUTH_SECRET=your-super-secret-key-change-this-in-production
+NEXTAUTH_URL=http://localhost:3000
+
+# Database
+MONGODB_URI=mongodb://localhost:27017/tasker
+
+# AI Features (Optional)
 NEXT_PUBLIC_OPENAI_API_KEY=your_api_key_here
 ```
+
+### Authentication Setup
+
+The app uses NextAuth.js for user authentication with credentials provider and MongoDB for user storage.
+
+1. **Generate NEXTAUTH_SECRET**: Use `openssl rand -base64 32` or an online generator
+2. **Set NEXTAUTH_URL**: Use `http://localhost:3000` for development, your production URL for deployment
+3. **MongoDB Setup**: Install MongoDB locally or use MongoDB Atlas
+4. **Test User**: POST to `/api/setup-test-user` to create a test account (email: `talentedhand10@gmail.com`, password: `@D3signer101!`)
 
 ### AI Feature Setup
 
@@ -71,9 +91,12 @@ The app provides detailed error messages to help diagnose issues.
 ```
 src/
 ├── app/                 # Next.js app directory
+│   ├── api/            # API routes (auth, tasks)
+│   ├── auth/           # Authentication pages (signin, signup)
+│   └── setup/          # Setup page
 ├── components/          # React components
 ├── hooks/              # Custom React hooks
-├── lib/                # Utility libraries and contexts
+├── lib/                # Utility libraries, contexts, and auth config
 ├── types/              # TypeScript type definitions
 └── utils/              # Helper functions
 ```
